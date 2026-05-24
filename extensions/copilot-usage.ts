@@ -24,6 +24,7 @@ type PremiumInteractionsSnapshot = {
 }
 
 type CopilotUserResponse = {
+  login: string
   copilot_plan?: string
   quota_reset_date?: string
   quota_reset_date_utc?: string
@@ -38,11 +39,13 @@ type UsageState = (
     error: string
   }
   | {
+    account: string
     type: 'success'
     percentage: number
     used: number
     entitlement: number
-  } | {
+  }
+  | {
     type: 'loading'
   }
 ) & {
@@ -82,6 +85,7 @@ function buildUsageState(payload: CopilotUserResponse): UsageState {
 
   if (snapshot.unlimited) {
     return {
+      account: payload.login,
       type: 'success',
       entitlement: Infinity,
       percentage: 0,
@@ -100,6 +104,7 @@ function buildUsageState(payload: CopilotUserResponse): UsageState {
   const plan = payload.copilot_plan ?? 'unknown'
 
   return {
+    account: payload.login,
     type: 'success',
     percentage: percentUsed,
     used,
@@ -119,7 +124,7 @@ async function fetchUsage(): Promise<UsageState> {
 }
 
 function formatStatusText(theme: Theme, state: UsageState): string {
-  const prefix = theme.fg('dim', 'Copilot: ')
+  const prefix = theme.fg('dim', `Copilot ${state.type === 'success' ? `(${state.account})` : ''}: `)
 
   if (state.type === 'error') {
     return `${prefix}${theme.fg('warning', state.error)}`
@@ -138,7 +143,10 @@ function formatStatusText(theme: Theme, state: UsageState): string {
     percentageStr = `${formatNumber(state.percentage)}%`
   }
 
-  return theme.fg('text', `${prefix}${percentageStr} ${theme.fg('dim', `(${formatNumber(state.used)}/${formatNumber(state.entitlement)})`)}`)
+  return theme.fg(
+    'text',
+    `${prefix}${percentageStr} ${theme.fg('dim', `(${formatNumber(state.used)}/${formatNumber(state.entitlement)})`)}`
+  )
 }
 
 function setStatus(ctx: ExtensionContext, theme: Theme, state: UsageState) {
@@ -157,7 +165,11 @@ export default function copilotUsageExtension(pi: ExtensionAPI) {
         const theme = ctx.ui.theme
         const usage = await fetchUsage()
         setStatus(ctx, theme, usage)
-        if (notify) ctx.ui.notify(theme.fg('text', `${formatStatusText(theme, usage)} — ${usage.details}`), 'info')
+        if (notify)
+          ctx.ui.notify(
+            theme.fg('text', `${formatStatusText(theme, usage)} — ${usage.details}`),
+            'info'
+          )
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error)
         const theme = ctx.ui.theme
