@@ -124,7 +124,8 @@ async function fetchUsage(): Promise<UsageState> {
 }
 
 function formatStatusText(theme: Theme, state: UsageState): string {
-  const prefix = theme.fg('dim', `Copilot ${state.type === 'success' ? `(${state.account})` : ''}: `)
+  const account = state.type === 'success' ? ` (${state.account})` : ''
+  const prefix = theme.fg('dim', `Copilot${account}: `)
 
   if (state.type === 'error') {
     return `${prefix}${theme.fg('warning', state.error)}`
@@ -149,12 +150,12 @@ function formatStatusText(theme: Theme, state: UsageState): string {
   )
 }
 
-function setStatus(ctx: ExtensionContext, theme: Theme, state: UsageState) {
-  ctx.ui.setStatus(STATUS_KEY, formatStatusText(theme, state))
+function setStatus(ctx: ExtensionContext, state: UsageState) {
+  ctx.ui.setStatus(STATUS_KEY, formatStatusText(ctx.ui.theme, state))
 }
 
-export default function copilotUsageExtension(pi: ExtensionAPI) {
-  let timer: NodeJS.Timeout | undefined
+export default function (pi: ExtensionAPI) {
+  let interval: NodeJS.Timeout | undefined
   let refreshPromise: Promise<void> | undefined
 
   const refresh = async (ctx: ExtensionContext, notify = false) => {
@@ -162,9 +163,10 @@ export default function copilotUsageExtension(pi: ExtensionAPI) {
 
     refreshPromise = (async () => {
       try {
-        const theme = ctx.ui.theme
         const usage = await fetchUsage()
-        setStatus(ctx, theme, usage)
+        const theme = ctx.ui.theme
+
+        setStatus(ctx, usage)
         if (notify)
           ctx.ui.notify(
             theme.fg('text', `${formatStatusText(theme, usage)} — ${usage.details}`),
@@ -172,8 +174,7 @@ export default function copilotUsageExtension(pi: ExtensionAPI) {
           )
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error)
-        const theme = ctx.ui.theme
-        setStatus(ctx, theme, {
+        setStatus(ctx, {
           type: 'error',
           error: 'error',
           details: `Copilot Fetch error: ${message}`,
@@ -197,23 +198,30 @@ export default function copilotUsageExtension(pi: ExtensionAPI) {
   })
 
   pi.on('session_start', async (_event, ctx) => {
-    const theme = ctx.ui.theme
-    setStatus(ctx, theme, {
+    setStatus(ctx, {
       type: 'loading',
       details: 'loading…',
     })
     await refresh(ctx, false)
 
-    if (timer) clearInterval(timer)
-    timer = setInterval(() => {
+    if (interval) clearInterval(interval)
+    interval = setInterval(() => {
       void refresh(ctx, false)
     }, REFRESH_INTERVAL_MS)
   })
 
+  pi.on('input', async (_event, ctx) => {
+    await refresh(ctx)
+  })
+
+  pi.on('turn_end', async (_event, ctx) => {
+    await refresh(ctx)
+  })
+
   pi.on('session_shutdown', async () => {
-    if (timer) {
-      clearInterval(timer)
-      timer = undefined
+    if (interval) {
+      clearInterval(interval)
+      interval = undefined
     }
   })
 }
