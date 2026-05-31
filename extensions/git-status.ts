@@ -224,6 +224,8 @@ export default function (pi: ExtensionAPI) {
     if (!ctx.hasUI) return
 
     try {
+      sessionState.theme = ctx.ui.theme
+
       const line = await gitStatus.getGitStatusLine({ cwd: ctx.cwd })
       ctx.ui.setStatus(WIDGET_ID, line)
     } catch {
