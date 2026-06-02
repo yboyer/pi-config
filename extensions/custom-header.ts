@@ -153,14 +153,23 @@ class WelcomeCard {
 
     const logoFrames = this.#currentLogoFrame()
 
+    const leftSeparator = ` ${subtle(BOX.h.repeat(Math.max(0, leftCol - 2)))}`
+    const rightSeparator = ` ${subtle(BOX.h.repeat(Math.max(0, rightCol - 2)))}`
+
     const leftLines: string[] = [
-      '',
-      centerIn(bold('Welcome back!'), leftCol),
       '',
       ...logoFrames.map(l => centerIn(l, leftCol, logoRawWidth)),
       '',
       centerIn(muted(this.modelId), leftCol),
       centerIn(subtle(this.modelProvider), leftCol),
+      '',
+      leftSeparator,
+      centerIn(dim('Ctrl+Z'), leftCol),
+      centerIn(subtle('Suspend to background'), leftCol),
+      centerIn(subtle('(fg to toggle back)'), leftCol),
+      '',
+      centerIn(dim('Option+Enter'), leftCol),
+      centerIn(subtle('Queue follow-up message'), leftCol),
     ]
 
     const skills = this.commands
@@ -172,12 +181,11 @@ class WelcomeCard {
     const prompts = this.commands
       .filter(c => c.source === 'prompt')
       .sort((a, b) => a.name.localeCompare(b.name))
-    const separator = ` ${subtle(BOX.h.repeat(Math.max(0, rightCol - 2)))}`
 
     const rightLines: string[] = []
     const section = (label: string, prefix: string, items: Command[], limit = Infinity) => {
       if (!items.length) return
-      if (rightLines.length > 0) rightLines.push(separator)
+      if (rightLines.length > 0) rightLines.push(rightSeparator)
       rightLines.push(` ${bold(accent(label))}`)
       for (const c of items.slice(0, limit))
         rightLines.push(truncateToWidth(` ${dim(prefix)}${muted(c.name)}`, rightCol))
@@ -188,18 +196,18 @@ class WelcomeCard {
     if (!rightLines.length) rightLines.push(` ${subtle('No commands loaded')}`)
     rightLines.push('')
 
-    const v = dim(BOX.v)
+    const v = subtle(BOX.v)
     const lines: string[] = []
 
     const title = ` ${projectName()} `
     const prefix = BOX.h.repeat(3)
     const titleVisLen = prefix.length + title.length
     lines.push(
-      dim(BOX.tl) +
-        dim(prefix) +
+      subtle(BOX.tl) +
+        subtle(prefix) +
         muted(title) +
-        dim(BOX.h.repeat(Math.max(0, boxWidth - 2 - titleVisLen))) +
-        dim(BOX.tr)
+        subtle(BOX.h.repeat(Math.max(0, boxWidth - 2 - titleVisLen))) +
+        subtle(BOX.tr)
     )
 
     const height = Math.max(leftLines.length, rightLines.length)
@@ -215,7 +223,7 @@ class WelcomeCard {
       }
     }
 
-    lines.push(dim(BOX.bl) + dim(BOX.h.repeat(boxWidth - 2)) + dim(BOX.br))
+    lines.push(subtle(BOX.bl) + subtle(BOX.h.repeat(boxWidth - 2)) + subtle(BOX.br))
     return lines
   }
 }
