@@ -263,13 +263,23 @@ class BorderStatusEditor extends CustomEditor {
   private gitStatusLine = ''
   private REFRESH_INTERVAL_MS = 2_000
 
+  private formatInputWithCommandHighlight(paddingX: number, input: string): string {
+    const commandMatch = input.match(/\s\/([\w:-]+)(.*)$/)
+    if (!commandMatch) return input
+
+    const command = `${' '.repeat(paddingX)}/${commandMatch[1]}`
+    const rest = commandMatch[2]
+    const styledCommand = this.sessionState.theme?.fg('accent', command) ?? command
+    return `${styledCommand}${rest}`
+  }
+
   constructor(
     tui: TUI,
     theme: EditorTheme,
     keybindings: KeybindingsManager,
     private sessionState: SessionState
   ) {
-    super(tui, theme, keybindings, { paddingX: 0 })
+    super(tui, theme, keybindings)
     this.sessionState = sessionState
 
     this.gitStatusEditor = new GitStatus(sessionState)
@@ -312,6 +322,15 @@ class BorderStatusEditor extends CustomEditor {
     const lines = super.render(width)
     if (lines.length < 2) return lines
 
+    // Style input line with command highlight
+    const inputLineIdx = lines.findIndex(line => !line.includes(LINE) && line.trim().length > 0)
+    if (inputLineIdx >= 0 && inputLineIdx < lines.length) {
+      lines[inputLineIdx] = this.formatInputWithCommandHighlight(
+        this.getPaddingX(),
+        lines[inputLineIdx]
+      )
+    }
+
     const topLeft = this.borderColor(
       ` ${this.sessionState.model}${this.sessionState.thinking !== 'off' ? ` · ${this.sessionState.thinking}` : ''} `
     )
@@ -328,7 +347,6 @@ class BorderStatusEditor extends CustomEditor {
       0,
       ''
     )
-
     lines.splice(
       lines.findLastIndex(line => line.includes(LINE)),
       1,
