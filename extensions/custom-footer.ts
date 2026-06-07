@@ -31,6 +31,12 @@ function sanitizeStatusText(text: string): string {
     .trim()
 }
 
+function removeColorCodes(text: string): string {
+  // ANSI color codes are of the form \x1b[...m
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: Removes ANSI color
+  return text.replace(/\x1b\[[0-9;]*m/g, '')
+}
+
 function formatCwd(cwd: string): string {
   const home = process.env.HOME
   if (home && cwd.startsWith(home)) {
@@ -178,7 +184,15 @@ export default function (pi: ExtensionAPI) {
           if (extensionStatusesClone.size > 0) {
             const sortedStatuses = Array.from(extensionStatusesClone.entries())
               .sort(([a], [b]) => a.localeCompare(b))
-              .map(([, text]) => sanitizeStatusText(text))
+              .map(([key, text]) => {
+                const cleanText = removeColorCodes(text)
+                // Dim git status to differentiate from core stats, but keep accent color for branch name if present
+                if (key === 'mcp') {
+                  return theme.fg('border', cleanText)
+                }
+                return theme.fg('dim', cleanText)
+              })
+              .map(sanitizeStatusText)
               .filter(text => text.trim().length > 0)
             const statusLine = sortedStatuses.join(' ')
 
@@ -201,26 +215,5 @@ export default function (pi: ExtensionAPI) {
 
   pi.on('session_shutdown', (_event, ctx) => {
     if (ctx.hasUI) ctx.ui.setFooter(undefined)
-  })
-
-  pi.on('thinking_level_select', async (_event, ctx) => {
-    if (!ctx.hasUI) return
-    installFooter(ctx)
-  })
-
-  pi.registerCommand('footer', {
-    description: 'Enable the blue flowing gradient session footer',
-    async handler(_args, ctx) {
-      installFooter(ctx)
-      ctx.ui.notify('Custom footer enabled', 'info')
-    },
-  })
-
-  pi.registerCommand('footer-builtin', {
-    description: "Restore pi's built-in footer for this session",
-    async handler(_args, ctx) {
-      ctx.ui.setFooter(undefined)
-      ctx.ui.notify('Built-in footer restored', 'info')
-    },
   })
 }
