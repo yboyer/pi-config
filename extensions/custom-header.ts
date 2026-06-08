@@ -372,6 +372,7 @@ export default function (pi: ExtensionAPI) {
 
     const allowedEvents: SessionStartEvent['reason'][] = ['reload', 'startup']
     const hasMessages = ctx.sessionManager.getEntries().filter(e => e.type === 'message').length > 0
+    const isOverlay = allowedEvents.includes(event.reason) && hasMessages
 
     card = new WelcomeCard({
       theme: ctx.ui.theme,
@@ -384,7 +385,7 @@ export default function (pi: ExtensionAPI) {
       commands: pi.getCommands(),
     })
 
-    if (allowedEvents.includes(event.reason) && hasMessages) {
+    if (isOverlay) {
       await ctx.ui.custom(
         (tui, _theme, _kb, done) => {
           requestRender = () => tui.requestRender()
@@ -412,6 +413,11 @@ export default function (pi: ExtensionAPI) {
 
     ctx.ui.setHeader(tui => {
       requestRender = () => tui.requestRender()
+
+      if (!isOverlay) {
+        card!.playIntro(requestRender)
+      }
+
       return {
         render(width) {
           return [
