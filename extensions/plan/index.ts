@@ -168,13 +168,13 @@ export default function plan(pi: ExtensionAPI) {
     )
   })
 
-  pi.on('before_agent_start', async e => {
+  pi.on('before_agent_start', async event => {
     if (!planSessionData) {
       return undefined
     }
 
     return {
-      systemPrompt: `${planSessionData.systemPrompt}\n\n${systemPromptOptionsToText(e.systemPromptOptions)}`,
+      systemPrompt: `${planSessionData.systemPrompt}\n\n${systemPromptOptionsToText(event.systemPromptOptions)}`,
     }
   })
 }

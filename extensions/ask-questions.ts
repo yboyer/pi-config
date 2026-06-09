@@ -81,10 +81,10 @@ function errorResult(
 
 export default function questionnaire(pi: ExtensionAPI) {
   pi.registerTool({
-    name: 'questionnaire',
-    label: 'Questionnaire',
+    name: 'askQuestions',
+    label: 'Ask Clarifying Questions',
     description:
-      'Ask the user one or more questions. Use for clarifying requirements, getting preferences, or confirming decisions. For single questions, shows a simple option list. For multiple questions, shows a tab-based interface.',
+      'Use this tool to ask the user one or more clarifying questions before proceeding. Prefer it over asking questions in plain text when you need user input. Each question can offer fixed options and can optionally let the user type a custom answer. Use it to clarify requirements, collect preferences, or confirm decisions.',
     parameters: QuestionnaireParams,
 
     async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
