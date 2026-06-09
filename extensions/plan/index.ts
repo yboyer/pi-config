@@ -143,10 +143,9 @@ export default function plan(pi: ExtensionAPI) {
         parentSession: ctx.sessionManager.getSessionFile(),
         async setup(sessionManager) {
           sessionManager.appendCustomEntry(PLAN_SESSION_TYPE, planPrompt)
-          sessionManager.appendSessionInfo('Plan')
         },
         async withSession(replacementCtx) {
-          replacementCtx.sendUserMessage('')
+          replacementCtx.sendUserMessage(userPrompt)
         },
       })
 
