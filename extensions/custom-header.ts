@@ -386,7 +386,7 @@ export default function (pi: ExtensionAPI) {
     })
 
     if (isOverlay) {
-      await ctx.ui.custom(
+      ctx.ui.custom(
         (tui, _theme, _kb, done) => {
           requestRender = () => tui.requestRender()
           card!.playIntro(requestRender)
