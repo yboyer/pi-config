@@ -32,6 +32,7 @@ For full personal setup, use this `settings.json`:
   "theme": "one-dark-pro",
   "quietStartup": true,
   "packages": [
+    "npm:@juicesharp/rpiv-ask-user-question",
     "npm:pi-mcp-adapter",
     "git:github.com/yboyer/pi",
     {
