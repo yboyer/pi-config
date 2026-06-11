@@ -95,7 +95,7 @@ class OverlayComponent {
     const topLineBefore =
       titlePosition === 'center'
         ? this.BOX.h.repeat(Math.floor((innerW - titleW) / 2))
-        : this.BOX.h.repeat(3)
+        : this.BOX.h.repeat(1)
 
     const topLineAfter = this.BOX.h.repeat(Math.max(0, innerW - titleW - topLineBefore.length))
 
@@ -367,6 +367,14 @@ export default function (pi: ExtensionAPI) {
   let requestRender: (() => void) | undefined
   let card: WelcomeCard | undefined
 
+  function formatCwd(cwd: string): string {
+    const home = process.env.HOME
+    if (home && cwd.startsWith(home)) {
+      return `~${cwd.slice(home.length)}`
+    }
+    return cwd
+  }
+
   pi.on('session_start', async (event, ctx) => {
     if (!ctx.hasUI) return
 
@@ -377,7 +385,7 @@ export default function (pi: ExtensionAPI) {
     card = new WelcomeCard({
       theme: ctx.ui.theme,
       sessionName: ctx.sessionManager.getSessionName(),
-      projectName: ctx.cwd.split('/').pop()!,
+      projectName: formatCwd(ctx.cwd),
       model: {
         id: ctx.model?.id ?? 'no model selected',
         provider: ctx.model?.provider ?? '',

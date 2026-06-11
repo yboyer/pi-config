@@ -1,12 +1,4 @@
-/**
- * Custom Footer Extension - demonstrates ctx.ui.setFooter()
- *
- * footerData exposes data not otherwise accessible:
- * - getGitBranch(): current git branch
- * - getExtensionStatuses(): texts from ctx.ui.setStatus()
- *
- * Token stats come from ctx.sessionManager/ctx.model (already accessible).
- */
+import { stripVTControlCharacters } from 'node:util'
 
 import type { ExtensionAPI, ExtensionContext } from '@earendil-works/pi-coding-agent'
 import { truncateToWidth, visibleWidth } from '@earendil-works/pi-tui'
@@ -19,16 +11,15 @@ function formatTokens(count: number): string {
   return `${Math.round(count / 1000000)}M`
 }
 
-/**
- * Sanitize text for display in a single-line status.
- * Removes newlines, tabs, carriage returns, and other control characters.
- */
 function sanitizeStatusText(text: string): string {
-  // Replace newlines, tabs, carriage returns with space, then collapse multiple spaces
-  return text
-    .replace(/[\r\n\t]/g, ' ')
-    .replace(/ +/g, ' ')
-    .trim()
+  return (
+    stripVTControlCharacters(text)
+      .replace(/[\r\n\t\f\v]+/g, ' ')
+      // biome-ignore lint/suspicious/noControlCharactersInRegex: needed
+      .replace(/[\u0000-\u001f\u007f-\u009f]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+  )
 }
 
 function removeColorCodes(text: string): string {
@@ -146,10 +137,10 @@ export default function (pi: ExtensionAPI) {
 
           const lines = [dimStatsLeft + dimRemainder]
 
-          const bottomLines: string[] = [theme.fg('muted', formatCwd(ctx.sessionManager.getCwd()))]
+          const bottomLines: string[] = []
+          // bottomLines.push(theme.fg('muted', formatCwd(ctx.sessionManager.getCwd())))
           if (extensionStatusesClone.has('yboyer-git-status')) {
-            bottomLines[0] += ` ${extensionStatusesClone.get('yboyer-git-status')!}`
-            // Already displayed in the editor
+            // bottomLines[0] += ` ${extensionStatusesClone.get('yboyer-git-status')!}`
             extensionStatusesClone.delete('yboyer-git-status')
           }
 
